@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Marc Student Selector</title>
+    <style>
+        :root {
+            --bg-color: #eef2f7;
+            --panel-bg: #0c4a6e;
+            --text-color: #ffffff;
+            --accent-blue: #0284c7;
+            --accent-green: #16a34a;
+            --accent-red: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial Black', Gadget, sans-serif;
+        }
+
+        body {
+            background: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Full Screen Window Specific Resets */
+        .game-container:fullscreen {
+            max-width: 100vw;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            padding: 40px;
+            background: var(--bg-color);
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- SIDEBAR UI --- */
+        .sidebar {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ui-panel {
+            background: var(--panel-bg);
+            border: 4px solid #0284c7;
+            border-radius: 15px;
+            padding: 12px;
+            color: var(--text-color);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .panel-title {
+            text-align: center;
+            font-size: 15px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: #facc15;
+            text-shadow: 2px 2px #000;
+            letter-spacing: 1px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 15px;
+            border-radius: 8px;
+            border: 3px solid #0369a1;
+            outline: none;
+            font-weight: bold;
+        }
+
+        .excel-paste-box {
+            width: 100%;
+            height: 220px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 3px solid #0369a1;
+            background: #f8fafc;
+            color: #1e293b;
+            font-weight: bold;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 4px #000;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px #000;
+        }
+
+        .btn-add { background: var(--accent-green); box-shadow: 0 4px #14532d; }
+        .btn-delete { background: var(--accent-red); box-shadow: 0 4px #7f1d1d; }
+        
+        .btn-start {
+            background: #eab308;
+            color: #000;
+            font-size: 32px;
+            padding: 12px;
+            text-shadow: none;
+            box-shadow: 0 6px #a16207;
+            border: 3px solid #fff;
+        }
+        .btn-start:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px #a16207;
+        }
+
+        .btn-fullscreen {
+            background: #3b82f6;
+            box-shadow: 0 4px #1d4ed8;
+            font-size: 14px;
+            padding: 10px;
+        }
+        .btn-fullscreen:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px #1d4ed8;
+        }
+
+        /* --- MACHINE CANVAS VIEW --- */
+        .machine-view {
+            flex: 1;
+            position: relative;
+            background: #cbd5e1;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 6px solid #475569;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container:fullscreen .machine-view {
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            aspect-ratio: 740 / 550;
+            background: #000;
+        }
+        
+        .game-container:fullscreen canvas {
+            max-height: 90vh;
+        }
+
+        /* --- BIG WINNER POPUP MODAL --- */
+        .winner-modal {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 20px;
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: #991b1b;
+            border: 8px solid #facc15;
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: scale(0.5);
+            animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            max-width: 80%;
+        }
+
+        .modal-title {
+            color: #facc15;
+            font-size: 28px;
+            text-shadow: 3px 3px 0px #000;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .modal-name {
+            background: white;
+            color: #dc2626;
+            font-size: 48px;
+            padding: 20px 50px;
+            border-radius: 15px;
+            border: 5px solid #dc2626;
+            display: inline-block;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        .modal-close-btn {
+            margin-top: 25px;
+            background: #eab308;
+            color: #000;
+            font-size: 16px;
+            padding: 10px 30px;
+            font-weight: bold;
+            box-shadow: 0 4px #a16207;
+        }
+
+        #asset-preloader {
+            display: none;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popUp { from { transform: scale(0.5); } to { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+<div id="asset-preloader">
+    <img id="domMachine" src="machine.png">
+    <img id="domClawClose" src="clawopen.png">
+    <img id="domClawSelect" src="clawselect.png">
+    <img id="domBall1" src="1.png">
+    <img id="domBall2" src="2.png">
+    <img id="domBall3" src="3.png">
+    <img id="domBall4" src="4.png">
+    <img id="domBall5" src="5.png">
+    <img id="domBall6" src="6.png">
+    <img id="domBall7" src="7.png">
+    <img id="domBall8" src="8.png">
+</div>
+
+<div class="game-container" id="mainContainer">
+    <!-- Big Winner Screen Overlay -->
+    <div id="winnerModal" class="winner-modal">
+        <div class="modal-content">
+            <div class="modal-title">★ WINNER ★</div>
+            <div id="modalWinnerName" class="modal-name">STUDENT</div>
+            <div>
+                <button class="modal-close-btn" onclick="closeWinnerModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Sidebar Control Panel -->
+    <div class="sidebar">
+        <!-- Class Selector -->
+        <div class="ui-panel">
+            <div class="panel-title">Select Class</div>
+            <select id="classSelect" onchange="loadClassData()"></select>
+            <div class="btn-row" style="margin-top: 8px;">
+                <button class="btn-add" onclick="createNewClass()">+ New Class</button>
+                <button class="btn-delete" onclick="deleteClass()">Delete</button>
+            </div>
+        </div>
+
+        <!-- Class List Big Box -->
+        <div class="ui-panel">
+            <div class="panel-title">Class List (Paste from Excel)</div>
+            <textarea id="namesBigBox" class="excel-paste-box" placeholder="Paste names here...&#10;One name per line" oninput="handleBoxInput()"></textarea>
+        </div>
+
+        <!-- Action Trigger -->
+        <button class="btn-start" onclick="triggerClawMachine()">GO!</button>
+        
+        <!-- Screen Utility Control -->
+        <button class="btn-fullscreen" onclick="toggleFullScreen()">🖥 Toggle Full Screen</button>
+    </div>
+
+    <!-- Arcade Claw Machine Screen -->
+    <div class="machine-view">
+        <canvas id="machineCanvas" width="740" height="550"></canvas>
+    </div>
+</div>
+
+<script>
+    // --- APP DATA STATE & LOCALSTORAGE ---
+    let state = JSON.parse(localStorage.getItem('teacherMarcSelectorData')) || {
+        classes: {
+            "CLASS A": ["ANDREI", "BEA", "CARLO", "DAVI", "ELLA", "FRANZ", "GINA", "IVAN", "JAMIE", "KYLE", "MIA", "NICO", "ZOE"]
+        },
+        currentClass: "CLASS A"
+    };
+
+    function saveState() {
+        localStorage.setItem('teacherMarcSelectorData', JSON.stringify(state));
+    }
+
+    // --- FULLSCREEN TOGGLE SYSTEM ---
+    function toggleFullScreen() {
+        const container = document.getElementById('mainContainer');
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+                alert(`Error trying to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // --- PASTE BOX INPUT HANDLING ---
+    function handleBoxInput() {
+        const text = document.getElementById('namesBigBox').value;
+        const namesArray = text.split('\n')
+                               .map(n => n.trim().toUpperCase())
+                               .filter(n => n.length > 0);
+        
+        state.classes[state.currentClass] = namesArray;
+        saveState();
+        resetCapsules();
+    }
+
+    // --- UI POPULATION LOGIC ---
+    function initUI() {
+        const select = document.getElementById('classSelect');
+        select.innerHTML = '';
+        Object.keys(state.classes).forEach(cls => {
+            const opt = document.createElement('option');
+            opt.value = cls;
+            opt.textContent = cls;
+            if(cls === state.currentClass) opt.selected = true;
+            select.appendChild(opt);
+        });
+        loadClassData();
+    }
+
+    function loadClassData() {
+        const select = document.getElementById('classSelect');
+        if (select.value) state.currentClass = select.value;
+        saveState();
+
+        const names = state.classes[state.currentClass] || [];
+        document.getElementById('namesBigBox').value = names.join('\n');
+        
+        resetCapsules();
+    }
+
+    function createNewClass() {
+        const name = prompt("Enter New Class Name:");
+        if(!name) return;
+        const upper = name.trim().toUpperCase();
+        if(state.classes[upper]) return alert("Class already exists!");
+        state.classes[upper] = [];
+        state.currentClass = upper;
+        saveState();
+        initUI();
+    }
+
+    function deleteClass() {
+        if(Object.keys(state.classes).length <= 1) return alert("You must keep at least one class!");
+        if(confirm(`Delete whole class "${state.currentClass}"?`)) {
+            delete state.classes[state.currentClass];
+            state.currentClass = Object.keys(state.classes)[0];
+            saveState();
+            initUI();
+        }
+    }
+
+    // --- CANVAS GRAPHICS & ASSETS LOADING ---
+    const canvas = document.getElementById('machineCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const imgMachine = document.getElementById('domMachine');
+    const imgClawClose = document.getElementById('domClawClose');
+    const imgClawSelect = document.getElementById('domClawSelect');
+
+    const ballImages = [];
+    for (let i = 1; i <= 8; i++) {
+        ballImages.push(document.getElementById(`domBall${i}`));
+    }
+
+    let capsules = [];
+    let claw = {
+        x: 370,
+        y: 130,
+        state: 'idle', 
+        targetX: 370,
+        targetY: 380,
+        speed: 6,
+        grabbedCapsule: null,
+        currentImg: imgClawClose
+    };
+    let pickedWinnerName = "";
+
+    function resetCapsules() {
+        capsules = [];
+        const studentList = state.classes[state.currentClass] || [];
+        
+        studentList.forEach((name) => {
+            const ballImgIdx = Math.floor(Math.random() * 8);
+            
+            capsules.push({
+                x: 320 + Math.random() * 250,
+                y: 430 + Math.random() * 40,
+                name: name,
+                img: ballImages[ballImgIdx],
+                angle: (Math.random() - 0.5) * 0.4,
+                visible: true
+            });
+        });
+    }
+
+    function triggerClawMachine() {
+        const studentList = state.classes[state.currentClass] || [];
+        if (studentList.length === 0) return alert("Please paste or type names into the big box first!");
+        if (claw.state !== 'idle') return;
+
+        const randomIdx = Math.floor(Math.random() * studentList.length);
+        pickedWinnerName = studentList[randomIdx];
+
+        let targetCapsule = capsules.find(c => c.name === pickedWinnerName && c.visible);
+        if(!targetCapsule) { resetCapsules(); targetCapsule = capsules[0]; }
+
+        claw.targetX = targetCapsule.x;
+        claw.targetY = targetCapsule.y - 75; // Adjust drop height down closer to the prize layer
+        claw.state = 'moving-to-target';
+        claw.currentImg = imgClawClose;
+    }
+
+    function updateLogic() {
+        switch (claw.state) {
+            case 'moving-to-target':
+                if (Math.abs(claw.x - claw.targetX) > 6) {
+                    claw.x += claw.x < claw.targetX ? claw.speed : -claw.speed;
+                } else {
+                    claw.state = 'dropping';
+                }
+                break;
+
+            case 'dropping':
+                if (claw.y < claw.targetY) {
+                    claw.y += claw.speed;
+                } else {
+                    claw.state = 'catching';
+                    claw.currentImg = imgClawSelect;
+                    
+                    setTimeout(() => { 
+                        let targetCapsule = capsules.find(c => c.name === pickedWinnerName && c.visible);
+                        if(targetCapsule) {
+                            targetCapsule.visible = false;
+                            claw.grabbedCapsule = targetCapsule;
+                        }
+                        claw.state = 'lifting'; 
+                    }, 300);
+                }
+                break;
+
+            case 'lifting':
+                if (claw.y > 130) {
+                    claw.y -= claw.speed;
+                } else {
+                    claw.state = 'moving-to-chute';
+                }
+                break;
+
+            case 'moving-to-chute':
+                let chuteX = 140; // Moved chute completely to the left side
+                if (Math.abs(claw.x - chuteX) > 6) {
+                    claw.x += claw.x < chuteX ? claw.speed : -claw.speed;
+                } else {
+                    claw.state = 'releasing';
+                    setTimeout(() => {
+                        claw.grabbedCapsule = null;
+                        claw.currentImg = imgClawClose;
+                        
+                        openWinnerModal(pickedWinnerName);
+                        claw.state = 'resetting';
+                    }, 400);
+                }
+                break;
+
+            case 'resetting':
+                if (claw.x < 370) claw.x += claw.speed;
+                else {
+                    claw.state = 'idle';
+                    resetCapsules();
+                }
+                break;
+        }
+    }
+
+    function drawLoop() {
+        updateLogic();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Draw machine background
+        ctx.drawImage(imgMachine, 0, 0, 740, 550);
+
+        // 2. Draw Resting overlapping student name balls
+        capsules.forEach(cap => {
+            if (!cap.visible) return;
+            ctx.save();
+            ctx.translate(cap.x, cap.y);
+            ctx.rotate(cap.angle);
+            ctx.drawImage(cap.img, -28, -28, 56, 56);
+            
+            ctx.fillStyle = "#000000";
+            ctx.font = "bold 9px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(cap.name.substring(0, 9), 0, 3);
+            ctx.restore();
+        });
+
+        // 3. Draw Steel cord link rope down to claw assembly
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(claw.x, 100);
+        ctx.lineTo(claw.x, claw.y);
+        ctx.stroke();
+
+        // 4. Draw Active state claw asset image directly
+        ctx.drawImage(claw.currentImg, claw.x - 45, claw.y, 90, 110);
+
+        // 5. Dynamic Claw Ball Catching Logic
+        // Drawn AFTER the claw layout so the ball perfectly layers INSIDE the fingers
+        if (claw.grabbedCapsule) {
+            let cap = claw.grabbedCapsule;
+            ctx.save();
+            ctx.translate(claw.x, claw.y + 78); // Centered into claw pinch coordinates
+            ctx.drawImage(cap.img, -25, -25, 50, 50);
+            ctx.fillStyle = "#000000";
+            ctx.font = "bold 9px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(cap.name.substring(0, 9), 0, 3);
+            ctx.restore();
+        }
+
+        requestAnimationFrame(drawLoop);
+    }
+
+    // --- MODAL SCREEN HANDLERS ---
+    function openWinnerModal(name) {
+        document.getElementById('modalWinnerName').textContent = name;
+        document.getElementById('winnerModal').style.display = 'flex';
+    }
+
+    function closeWinnerModal() {
+        document.getElementById('winnerModal').style.display = 'none';
+    }
+
+    window.onload = () => {
+        initUI();
+        requestAnimationFrame(drawLoop);
+    };
+</script>
+
+</body>
+</html>
